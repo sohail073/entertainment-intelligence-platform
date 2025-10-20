@@ -22,13 +22,43 @@ response = requests.get(url, headers=headers)
 if response.status_code == 200:
     soup = BeautifulSoup(response.text, "html.parser")
     
-    # Find all <h2> tags containing post titles
-    post_titles = soup.find_all("h2", class_="m-0")
-    
-    # Extract the href from the <a> tag inside <h2>, limit to 10
-    for i, h2 in enumerate(post_titles[:10], 1):
-        a_tag = h2.find("a", href=True)
-        if a_tag:
-            print(f"{i}: https://www.reddit.com{a_tag['href']}")
-else:
-    print(f"Error {response.status_code}")
+post_links = []
+
+for h2 in soup.find_all("h2", class_="m-0"):
+    a_tag = h2.find("a", href=True)
+    if a_tag and a_tag["href"].startswith("/r/"):
+        post_links.append("https://www.reddit.com" + a_tag["href"])
+    if len(post_links) >= 10:
+        break
+
+print(f"Found {len(post_links)} posts.")
+print("-" * 80)
+
+for index, post_url in enumerate(post_links, 1):
+    json_url = post_url.rstrip("/") + ".json"
+    print(f"\n[{index}] Fetching: {json_url}")
+
+    try:
+        res = requests.get(json_url, headers=headers)
+        if res.status_code != 200:
+            print(f"Failed ({res.status_code})")
+            continue
+
+        data = res.json()
+
+        main_post = data[0]["data"]["children"][0]["data"]
+        title = main_post.get("title", "No Title")
+        main_comment = main_post.get("selftext", "")
+
+        print(f"\nTitle: {title}")
+        print(f"Main Comment (selftext):\n{main_comment[:400]}...\n")
+
+        comments = data[1]["data"]["children"]
+        for i, c in enumerate(comments[:10], 1):
+            if "data" in c and "body" in c["data"]:
+                print(f"SubComment {i}: {c['data']['body'][:250]}...\n")
+
+
+    except Exception as e:
+        print(f"Error parsing {post_url}: {e}")
+        continue
