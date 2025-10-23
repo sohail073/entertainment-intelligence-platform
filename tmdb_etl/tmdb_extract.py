@@ -1,12 +1,17 @@
 import requests 
 import json 
 import os 
+from datetime import datetime
 from dotenv import load_dotenv 
+from tmdb_extract import read_raw_json_files
+
+
 load_dotenv() 
+
 # Your TMDB API token 
 ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN") 
-# Function to fetch data from a given endpoint 
 
+# Function to fetch data from a given endpoint 
 def fetch_tmdb_data(endpoint: str): 
     url = f"https://api.themoviedb.org/3/{endpoint}" 
     
@@ -22,38 +27,34 @@ def fetch_tmdb_data(endpoint: str):
         print(f"Error {response.status_code}: {response.text}") 
         return None
 
+def save_raw_json(data, filename):
+    
+    base_dir = os.getenv("RAW_DATA_DIR")
+    os.makedirs(base_dir, exist_ok=True)
+    
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filepath = os.path.join(base_dir, f"{filename}_{timestamp}.json")
+    
+    # Save JSON data
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    print(f"Saved")
 
-# Example calls:
 if __name__ == "__main__":
     
-    trending_movies = fetch_tmdb_data("trending/movie/day")
-    print('=' *20)
-    print('Trending Movies today:\n')
-    print(json.dumps(trending_movies, indent=2, ensure_ascii=False))
-    print('=' *20)
+    tasks = [
+        ("trending/movie/day", "trending_day"),
+        ("trending/movie/week", "trending_week"),
+        ("movie/top_rated", "top_rated"),
+        ("movie/popular", "popular")
+    ]
     
-    # Get trending movies this week
-    trending_movies = fetch_tmdb_data("trending/movie/week")
-    print('=' *20)
-    print('Trending Movies This Week:\n')
-    print(json.dumps(trending_movies, indent=2, ensure_ascii=False))
-    print('=' *20)
+    for endpoint, filename in tasks:
+        data = fetch_tmdb_data(endpoint)
+        print('=' * 20)
+        print(f'Completed for {filename.replace("_", " ").title()}\n')
+        print('=' * 20)
+        save_raw_json(data, filename)
 
-    # # Get popular TV shows
-    # popular_tv = fetch_tmdb_data("tv/popular")
-    # print('Popular TV Shows:\n')
-    # print(json.dumps(popular_tv, indent=2, ensure_ascii=False))
-    
-    topRated_movies = fetch_tmdb_data("movie/top_rated")
-    print('=' *20)
-    print('Top rated movies:\n')
-    print(json.dumps(topRated_movies, indent=2, ensure_ascii=False))
-    print('=' *20)
-    
-    popular_movies = fetch_tmdb_data("movie/popular")
-    print('=' *20)
-    print('Popular movies:\n')
-    print(json.dumps(topRated_movies, indent=2, ensure_ascii=False))
-    print('=' *20)
-    
-    
+
