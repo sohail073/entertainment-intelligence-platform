@@ -3,8 +3,6 @@ import json
 import os 
 from datetime import datetime
 from dotenv import load_dotenv 
-from tmdb_extract import read_raw_json_files
-
 
 load_dotenv() 
 
@@ -32,7 +30,7 @@ def save_raw_json(data, filename):
     base_dir = os.getenv("RAW_DATA_DIR")
     os.makedirs(base_dir, exist_ok=True)
     
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d")
     filepath = os.path.join(base_dir, f"{filename}_{timestamp}.json")
     
     # Save JSON data
