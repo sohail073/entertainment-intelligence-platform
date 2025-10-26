@@ -16,9 +16,9 @@ CREATE TABLE dim_genres (
 );
 
 -- Source Type Dim Table (trending_day, week, top_rated, popular)
-CREATE TABLE dim_source_types (
-    source_id SERIAL PRIMARY KEY,
-    source_name VARCHAR(50) UNIQUE
+CREATE TABLE dim_feed_type (
+    feed_id SERIAL PRIMARY KEY,
+    feed_name VARCHAR(50) UNIQUE
 );
 
 -- Date Dim Table
@@ -35,7 +35,7 @@ CREATE TABLE dim_dates (
 CREATE TABLE fact_movie_metrics (
     fact_id SERIAL PRIMARY KEY,
     movie_id INT REFERENCES dim_movies(movie_id),
-    source_id INT REFERENCES dim_source_types(source_id),
+    feed_id INT REFERENCES dim_feed_type(feed_id),
     date_id INT REFERENCES dim_dates(date_id),
     popularity FLOAT,
     vote_average FLOAT,
