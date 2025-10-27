@@ -9,6 +9,23 @@ load_dotenv()
 # Your TMDB API token 
 ACCESS_TOKEN = os.getenv("TMDB_ACCESS_TOKEN") 
 
+def fetch_genres():
+    """Fetch all movie genres from TMDB"""
+    url = "https://api.themoviedb.org/3/genre/movie/list"
+    
+    headers = {
+        "Authorization": f"Bearer {ACCESS_TOKEN}",
+        "accept": "application/json"
+    }
+    
+    response = requests.get(url, headers=headers)
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Error fetching genres: {response.status_code}")
+        return None
+
 # Function to fetch data from a given endpoint 
 def fetch_tmdb_data(endpoint: str): 
     url = f"https://api.themoviedb.org/3/{endpoint}" 
@@ -38,6 +55,7 @@ def save_raw_json(data, filename):
         json.dump(data, f, ensure_ascii=False, indent=2)
     
     print(f"Saved")
+    
 
 if __name__ == "__main__":
     

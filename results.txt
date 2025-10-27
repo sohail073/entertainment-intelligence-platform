@@ -1,0 +1,11 @@
+Database connection established.
+Fetching and loading genres...
+Loaded 19 genres into dim_genres.
+Saved
+Saved
+Saved
+Saved
+
+Reading file: popular_20251028.json
+Inserted 20 records into dim_movies.
+Inserted 53 records into movie_genres.

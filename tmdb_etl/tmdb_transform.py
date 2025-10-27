@@ -34,7 +34,7 @@ def read_raw_json_files():
 def parse_movie_data(data, feed_id, date_id):
     dim_movies = []
     movie_genres = []
-    fact_metrics = []
+    fact_movie_metrics = []
 
     if "results" not in data:
         print("No 'results' key found in the JSON data.")
@@ -58,23 +58,24 @@ def parse_movie_data(data, feed_id, date_id):
                 "movie_id": item.get("id"),
                 "genre_id": genre
             })
+            
+    for rank, item in enumerate(data["results"], start=1):
+        fact_movie_metrics.append({
+            "movie_id": item.get("id"),
+            "feed_id": feed_id,
+            "date_id": date_id,
+            "popularity": item.get("popularity"),
+            "vote_average": item.get("vote_average"),
+            "vote_count": item.get("vote_count"),
+            "rank_position": rank,
+            "fetch_timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+         })
 
-        for rank, item in enumerate(data["results"], start=1):
-            fact_metrics.append({
-                "movie_id": item.get("id"),
-                "feed_id": feed_id,
-                "date_id": date_id,
-                "popularity": item.get("popularity"),
-                "vote_average": item.get("vote_average"),
-                "vote_count": item.get("vote_count"),
-                "rank_position": rank,
-                "fetch_timestamp": datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
-            })
 
-    return {
+    return {    
         "dim_movies": dim_movies,
         "movie_genres": movie_genres,
-        "fact_metrics": fact_metrics
+        "fact_movie_metrics": fact_movie_metrics
     }    
     
 if __name__ == "__main__":
