@@ -1,7 +1,29 @@
 from connection import get_db_connection
+from datetime import datetime, timedelta
 
 conn = get_db_connection()
 cursor = conn.cursor()
+
+def load_dim_dates(date_id):
+    check_query = "SELECT 1 FROM dim_dates WHERE date_id = %s;"
+    cursor.execute(check_query, (date_id,))
+    
+    if cursor.fetchone() is None:
+        full_date = datetime.strptime(str(date_id), "%Y%m%d").date()
+        insert_query = """
+        INSERT INTO dim_dates (date_id, full_date, year, month, day, week)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(insert_query, (
+            date_id,
+            full_date,
+            full_date.year,
+            full_date.month,
+            full_date.day,
+            full_date.isocalendar()[1]
+        ))
+        conn.commit()
+        print(f"Inserted {date_id} into dim_dates.")
 
 def load_dim_genres(genres_data):
     """Load genre dimension data (one-time setup)"""
@@ -75,5 +97,5 @@ def load_fact_movie_metrics(fact_movie_metrics):
             fm["fetch_timestamp"]
         ))
     conn.commit()
-    print(f"Inserted {len(fact_metrics)} records into fact_metrics.")
+    print(f"Inserted {len(fact_movie_metrics)} records into fact_metrics.")
     

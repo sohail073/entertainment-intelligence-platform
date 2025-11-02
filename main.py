@@ -1,6 +1,6 @@
 from tmdb_etl.tmdb_extract import fetch_genres, fetch_tmdb_data, save_raw_json
 from tmdb_etl.tmdb_transform import read_raw_json_files, parse_movie_data
-from tmdb_etl.tmdb_load import load_dim_genres, load_dim_movies, load_movie_genres, load_fact_movie_metrics
+from tmdb_etl.tmdb_load import load_dim_genres, load_dim_movies, load_movie_genres, load_fact_movie_metrics, load_dim_dates
 
 def run_etl():
 
@@ -25,6 +25,7 @@ def run_etl():
         parsed = parse_movie_data(data, feed_id, date_id)
         
         if parsed:
+            load_dim_dates(date_id)
             load_dim_movies(parsed["dim_movies"])
             load_movie_genres(parsed["movie_genres"])  
             load_fact_movie_metrics(parsed["fact_movie_metrics"])
