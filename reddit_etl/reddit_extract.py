@@ -1,5 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
+from connection import get_db_connection
+from datetime import datetime, timedelta
 
 # url = "https://www.reddit.com/search/?q=The+Lost+Bus&type=posts&sort=hot&cId=b5d005a2-e354-4197-a58b-7ffe05681071&iId=f59184c4-8154-4a50-b896-92215b7cfd20"
 
@@ -18,6 +20,56 @@ HEADERS = {
 }
 
 BASE_URL = "https://www.reddit.com"
+
+def load_from_DB():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    query = """
+WITH ranked AS (
+    SELECT
+        fm.feed_id,
+        fm.movie_id,
+        fm.popularity,
+        ROW_NUMBER() OVER (
+            PARTITION BY fm.feed_id
+            ORDER BY fm.popularity DESC NULLS LAST
+        ) AS rn
+    FROM fact_movie_metrics AS fm
+    WHERE fm.movie_id IS NOT NULL
+),
+unique_movies AS (
+    SELECT
+        r.movie_id,
+        r.feed_id,
+        r.popularity,
+        ROW_NUMBER() OVER (
+            PARTITION BY r.movie_id
+            ORDER BY r.popularity DESC
+        ) AS movie_rank
+    FROM ranked r
+    WHERE r.rn <= 2
+)
+SELECT
+    m.title
+FROM unique_movies u
+JOIN dim_movies m ON m.movie_id = u.movie_id
+WHERE u.movie_rank = 1
+ORDER BY u.popularity DESC;
+"""
+
+    cursor.execute(query)
+    
+    rows = cursor.fetchall()
+    for row in rows:
+        print(row)
+    
+    cursor.close()
+    conn.close()
+    
+    titles = [row[0] for row in rows]
+    return titles
+    
 
 def fetch_html(url):
     res = requests.get(url, headers=HEADERS)
@@ -62,7 +114,28 @@ def parse_post_data(data):
     return title, body, comments
 
 def main():
-    search_url = "https://www.reddit.com/search/?q=The+Lost+Bus&type=posts&sort=hot"
+    
+    movie_titles = load_from_DB()
+    
+    # for title in movie_titles:
+    #     # Replace spaces with + for URL
+    #     query_title = title.replace(" ", "+")
+        
+    #     search_url = f"https://www.reddit.com/search/?q={query_title}&type=posts&sort=hot"
+        
+    #     print(f"Movie: {title}")
+    #     print(f"Reddit Search URL: {search_url}")
+    #     print("-" * 50)
+    
+    title = movie_titles[0]   # take only the first movie
+
+    query_title = f"{title} movie".replace(" ", "+")
+    search_url = f"https://www.reddit.com/search/?q={query_title}&type=posts&sort=hot"
+
+    print(f"Movie: {title}")
+    print(f"Reddit Search URL: {search_url}")
+    print("-" * 50)
+
 
     print("Fetching search results...")
     html = fetch_html(search_url)
